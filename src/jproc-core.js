@@ -247,7 +247,8 @@ function handleUpdate(data, step) {
         });
       }
     } catch (e) {
-      logger.error("Error evaluating expression:", e);
+      logger.error("Error evaluating expression:", e.message);
+      logger.error("Expression was:", step.exp);
     }
   } else if (step.hasOwnProperty('source')) {
     logger.info("Using source field for update:", step.source);
@@ -343,21 +344,27 @@ function processJson(inputFile, stepsFile, outputFile) {
 
 // New function to process JSON using a stream
 function processJsonStream(inputFile, stepsFile, outputFile) {
-  const stepsConfig = JSON.parse(fs.readFileSync(stepsFile, 'utf8'));
-  if (!validateStepsConfig(stepsConfig)) {
-    logger.error("Steps configuration validation failed.");
-    process.exit(1);
-  }
-  const inputStream = fs.createReadStream(inputFile, 'utf8');
-  // Changed parser pattern to parse the entire JSON object
-  const parser = JSONStream.parse();
-  const outputStream = fs.createWriteStream(outputFile, 'utf8');
-  inputStream.pipe(parser);
-  parser.on('data', data => {
-    stepsConfig.steps.forEach(step => runStep(data, step));
-    outputStream.write(JSON.stringify(data, null, 2) + "\n");
+  return new Promise((resolve, reject) => {
+    const stepsConfig = JSON.parse(fs.readFileSync(stepsFile, 'utf8'));
+    if (!validateStepsConfig(stepsConfig)) {
+      logger.error("Steps configuration validation failed.");
+      process.exit(1);
+    }
+    const inputStream = fs.createReadStream(inputFile, 'utf8');
+    const parser = JSONStream.parse();
+    const outputStream = fs.createWriteStream(outputFile, 'utf8');
+    inputStream.pipe(parser);
+    parser.on('data', data => {
+      stepsConfig.steps.forEach(step => runStep(data, step));
+      outputStream.write(JSON.stringify(data, null, 2) + "\n");
+    });
+    parser.on('end', () => {
+      logger.info("Processed JSON saved to", outputFile);
+      resolve();
+    });
+    parser.on('error', err => reject(err));
+    inputStream.on('error', err => reject(err));
   });
-  parser.on('end', () => logger.info("Processed JSON saved to", outputFile));
 }
 
 function setVerbose(val) {

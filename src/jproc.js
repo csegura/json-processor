@@ -26,21 +26,23 @@ if (verbose) {
 // Start timer
 const startTime = Date.now();
 
-if (streamMode) {
-  processJsonStream(inputFile, stepsFile, outputFile);
-} else {
-  processJson(inputFile, stepsFile, outputFile);
-}
-
-if (verbose) {
-  const endTime = Date.now();
-  const elapsedMs = endTime - startTime;
-  function formatTime(ms) {
-    let totalSeconds = ms / 1000;
-    let hours = Math.floor(totalSeconds / 3600);
-    let minutes = Math.floor((totalSeconds % 3600) / 60);
-    let seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${seconds.toFixed(2).padStart(5, '0')}`;
+(async function(){
+  if (streamMode) {
+    await processJsonStream(inputFile, stepsFile, outputFile);
+  } else {
+    processJson(inputFile, stepsFile, outputFile);
   }
-  console.log(chalk.yellow('[TIME]'), 'Elapsed Time:', formatTime(elapsedMs));
-}
+  
+  if (verbose) {
+    const endTime = Date.now();
+    const elapsedMs = endTime - startTime;
+    function formatTime(ms) {
+      let totalSeconds = ms / 1000;
+      let hours = Math.floor(totalSeconds / 3600);
+      let minutes = Math.floor((totalSeconds % 3600) / 60);
+      let seconds = totalSeconds % 60;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${seconds.toFixed(2).padStart(5, '0')}`;
+    }
+    console.log(chalk.yellow('[TIME]'), 'Elapsed Time:', formatTime(elapsedMs));
+  }
+})(); 
