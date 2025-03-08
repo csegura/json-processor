@@ -2,10 +2,12 @@ import fs from 'fs';
 import JSONStream from 'JSONStream';
 import chalk from 'chalk';
 
+let verboseLogging = false;
+
 const logger = {
-  info: (msg, ...args) => console.log(chalk.blue('[INFO]'), msg, ...args),
-  warn: (msg, ...args) => console.warn(chalk.yellow('[WARN]'), msg, ...args),
-  error: (msg, ...args) => console.error(chalk.red('[ERROR]'), msg, ...args)
+  info: (msg, ...args) => { if (verboseLogging) console.log(chalk.blue('[INFO]'), chalk.cyan(msg), ...args); },
+  warn: (msg, ...args) => { if (verboseLogging) console.warn(chalk.yellow('[WARN]'), chalk.yellow(msg), ...args); },
+  error: (msg, ...args) => { if (verboseLogging) console.error(chalk.red('[ERROR]'), chalk.red(msg), ...args); }
 };
 
 // Helper to remove a nested key using dot notation (supports arrays)
@@ -201,7 +203,22 @@ function handleUpdate(data, step) {
   const keyToUpdate = targetFull[targetFull.length - 1];
   const flatTargets = getFlatTargets(data, containerPath);
   
-  if (step.hasOwnProperty('source')) {
+  if (step.hasOwnProperty('exp')) {
+    logger.info("Using expression for update:", step.exp);
+    let expFunc;
+    try {
+      expFunc = eval("(" + step.exp + ")");
+      if (typeof expFunc !== "function") {
+        logger.error("Provided expression is not a function");
+      } else {
+        flatTargets.forEach(obj => {
+          obj[keyToUpdate] = expFunc(obj, obj[keyToUpdate]);
+        });
+      }
+    } catch (e) {
+      logger.error("Error evaluating expression:", e);
+    }
+  } else if (step.hasOwnProperty('source')) {
     logger.info("Using source field for update:", step.source);
     flatTargets.forEach(obj => {
       if (obj.hasOwnProperty(keyToUpdate)) {
@@ -219,7 +236,7 @@ function handleUpdate(data, step) {
       }
     });
   } else {
-    logger.warn("Warning: update action for", step.target, "has neither source nor value");
+    logger.warn("Warning: update action for", step.target, "has neither source, value, nor expression");
   }
 }
 
@@ -309,4 +326,8 @@ function processJsonStream(inputFile, stepsFile, outputFile) {
   parser.on('end', () => logger.info("Processed JSON saved to", outputFile));
 }
 
-export { processJson, processJsonStream };
+function setVerbose(val) {
+  verboseLogging = Boolean(val);
+}
+
+export { processJson, processJsonStream, setVerbose };

@@ -215,6 +215,32 @@ describe('jproc', function() {
         assert.strictEqual(outputData.data.oldKey, undefined);
         assert.strictEqual(outputData.data.unchanged, "same");
       });
+      
+      it('should update keys with expression', function() {
+        const inputJson = {
+          users: [
+            { name: "Alice", test: "$Alice" },
+            { name: "Bob", test: "$Bob" }
+          ]
+        };
+        const stepsJson = {
+          steps: [
+            {
+              type: "update",
+              target: "users.testValue",
+              exp: "(o, k) => o.test.substring(1)"
+            }
+          ]
+        };
+        fs.writeFileSync(inputFile, JSON.stringify(inputJson, null, 2), 'utf8');
+        fs.writeFileSync(stepsFile, JSON.stringify(stepsJson, null, 2), 'utf8');
+        
+        processJson(inputFile, stepsFile, outputFile);
+        const outputData = JSON.parse(fs.readFileSync(outputFile, 'utf8'));
+        outputData.users.forEach(user => {
+          assert.strictEqual(user.testValue, user.test.substring(1));
+        });
+      });
     });
   });
   

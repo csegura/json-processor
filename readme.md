@@ -69,7 +69,7 @@ Each action object must include:
       - "source": Specifies the key from which the new property's value should be copied.
       - "value": Provides a static value for the new property.
   - "remove": Removes an existing property.
-  - "update": Updates a property's value.
+  - "update": Updates a property's value. Optionally, an "exp" property can be provided containing a JavaScript expression to compute the new value dynamically.
   - "transform": Applies a function to transform a property's value.
 - Additional keys specific to the action.
 
@@ -98,6 +98,20 @@ Each action object must include:
 }
 ```
 - defaultValue may be an array or an object
+
+**Update using an expression**
+
+```
+{
+    "type": "update",
+    "target": "chats.messages.emptyArray",
+    "exp": "(o,k) => { o['emptyArray'].push('value'); return k; }"  
+}
+```
+
+- where (o,k) is current object and key, you have to return the new value
+- "(o,k) => o[k].substring(1)"
+
 
 **Remove Action:**
 ```
