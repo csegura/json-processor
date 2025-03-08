@@ -8,7 +8,7 @@ This project includes a command-line interface that accepts a JSON transformatio
 
 ## Bonus 
 
-I added another little tool to merge JSON files (jproc-merge)[merge.md]
+I added another little tool to merge JSON files, doc here -> [jproc-merge](merge.md)
 
 ## Installation
 
