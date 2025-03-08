@@ -72,14 +72,12 @@ Each action object must include:
       - "value": Provides a static value for the new property.
   - "remove": Removes an existing property.
   - "update": Updates a property's value. Optionally, an "exp" property can be provided containing a JavaScript expression to compute the new value dynamically.
-  - "transform": Applies a function to transform a property's value.
-- Additional keys specific to the action.
 
 ### Examples
 
+See more examples: (here)[examples.md]
+
 **Sample steps.json**
-
-
 
 **Create/Update Action (using source):**
 ```json
