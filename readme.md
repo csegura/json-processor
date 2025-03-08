@@ -6,6 +6,10 @@ This tool allows you to process JSON files ultra **FAST** using a series of tran
 
 This project includes a command-line interface that accepts a JSON transformation configuration file (`steps.json`), an input JSON file (`input.json`), and produces an output JSON file (`output.json`). It also supports processing via streams for efficient handling of large files.
 
+## Bonus 
+
+I added another little tool to merge JSON files (jproc-merge)[merge.md]
+
 ## Installation
 
 1. Install Node.js (v12 or higher is recommended).
@@ -136,6 +140,8 @@ Remember, steps.json must be a valid JSON array:
   { /* action object */ }
 ]
 ```
+
+## 
 
 ## Project Structure
 
