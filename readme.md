@@ -75,7 +75,7 @@ Each action object must include:
 
 ### Examples
 
-See more examples: (here)[examples.md]
+See more examples: [examples.md](examples.md)
 
 **Sample steps.json**
 
