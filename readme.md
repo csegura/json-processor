@@ -18,7 +18,7 @@ This project includes a command-line interface that accepts a JSON transformatio
 ## Usage
 
 Run the JSON Processor from the command line with the following syntax:
-```
+```sh
 node src/jproc.js <steps.json> <input.json> <output.json> [--stream]  [--verbose]
 ```
 
@@ -32,12 +32,12 @@ node src/jproc.js <steps.json> <input.json> <output.json> [--stream]  [--verbose
 ### Examples
 
 **Standard Processing:**
-```
+```sh
 node src/jproc.js steps.json data/input.json data/output.json
 ```
 
 **Stream Processing:**
-```
+```sh
 node src/jproc.js steps.json data/input.json data/output.json --stream
 ```
 
@@ -48,14 +48,14 @@ This project supports two main processing actions:
 1. Standard Processing  
    - Description: Loads the entire JSON file into memory, applies the transformation steps, and writes the output. This mode is suitable for small to moderately sized files.  
    - Command:  
-     ```
+     ```sh
      node src/jproc.js steps.json input.json output.json
      ```
 
 2. Stream Processing  
    - Description: Processes the JSON file as a stream, handling data in chunks which is ideal for large files to reduce memory usage.  
    - Command:  
-     ```
+     ```sh
      node src/jproc.js steps.json input.json output.json --stream
      ```
 
@@ -82,7 +82,7 @@ Each action object must include:
 
 
 **Create/Update Action (using source):**
-```
+```json
 {
   "type": "create",
   "property": "newKey",
@@ -91,7 +91,7 @@ Each action object must include:
 ```
 
 **Create/Update Action (using value):**
-```
+```json
 {
   "type": "create",
   "property": "newKey",
@@ -102,7 +102,7 @@ Each action object must include:
 
 **Update using an expression**
 
-```
+```json
 {
     "type": "update",
     "target": "chats.messages.emptyArray",
@@ -115,7 +115,7 @@ Each action object must include:
 
 
 **Remove Action:**
-```
+```json
 {
   "type": "remove",
   "property": "obsoleteKey"
@@ -123,7 +123,7 @@ Each action object must include:
 ```
 
 **Transform Action:**
-```
+```json
 {
   "type": "transform",
   "property": "numericKey",
@@ -132,7 +132,7 @@ Each action object must include:
 ```
 
 Remember, steps.json must be a valid JSON array:
-```
+```json
 [
   { /* action object */ },
   { /* action object */ }
