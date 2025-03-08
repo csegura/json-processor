@@ -1,6 +1,6 @@
 # JSON Processor
 
-Welcome to the JSON Processor project! This tool allows you to process JSON files ultra **FAST** using a series of transformation steps defined in a steps file.
+This tool allows you to process JSON files ultra **FAST** using a series of transformation steps defined in a steps file.
 
 ## Overview
 
@@ -19,13 +19,15 @@ This project includes a command-line interface that accepts a JSON transformatio
 
 Run the JSON Processor from the command line with the following syntax:
 ```
-node src/jproc.js <steps.json> <input.json> <output.json> [stream]
+node src/jproc.js <steps.json> <input.json> <output.json> [--stream]  [--verbose]
 ```
 
 - `<steps.json>`: A JSON file specifying transformation steps.
 - `<input.json>`: The source JSON file to process.
 - `<output.json>`: The destination file for the processed output.
-- `[stream]`: (Optional) Pass "stream" as the fifth argument to use stream processing.
+- `[stream]`: (Optional) Pass "stream" as the fifth argument to use stream
+ processing.
+- `[verbose]`: (Optional) Verbose output
 
 ### Examples
 
@@ -36,7 +38,7 @@ node src/jproc.js steps.json data/input.json data/output.json
 
 **Stream Processing:**
 ```
-node src/jproc.js steps.json data/input.json data/output.json stream
+node src/jproc.js steps.json data/input.json data/output.json --stream
 ```
 
 ## Detailed Actions
@@ -54,7 +56,7 @@ This project supports two main processing actions:
    - Description: Processes the JSON file as a stream, handling data in chunks which is ideal for large files to reduce memory usage.  
    - Command:  
      ```
-     node src/jproc.js steps.json input.json output.json stream
+     node src/jproc.js steps.json input.json output.json --stream
      ```
 
 ## Steps File Actions
@@ -76,7 +78,6 @@ Each action object must include:
 ### Examples
 
 **Sample steps.json**
-
 
 
 

@@ -5,6 +5,8 @@ import chalk from 'chalk';
 let verboseLogging = false;
 
 const logger = {
+  step: (msg, ...args) => { if (verboseLogging) console.log(chalk.green('[STEP]'), chalk.cyan(msg), ...args); },
+  count: (msg, count) => { if (verboseLogging) console.log(chalk.cyan('[MADE]'), msg, chalk.cyan(count), " changes."); },
   info: (msg, ...args) => { if (verboseLogging) console.log(chalk.blue('[INFO]'), chalk.cyan(msg), ...args); },
   warn: (msg, ...args) => { if (verboseLogging) console.warn(chalk.yellow('[WARN]'), chalk.yellow(msg), ...args); },
   error: (msg, ...args) => { if (verboseLogging) console.error(chalk.red('[ERROR]'), chalk.red(msg), ...args); }
@@ -13,31 +15,40 @@ const logger = {
 // Helper to remove a nested key using dot notation (supports arrays)
 function removeNestedKey(obj, keyPath) {
     const keys = keyPath.split('.');
-    removeKey(obj, keys);
+    return removeKey(obj, keys);
   }
   
-  function removeKey(current, keys) {
-    if (!current) return;
+// Modified: update removeKey to return count of deletions
+function removeKey(current, keys) {
+    let count = 0; // added for change count
+    if (!current) return count;
     if (keys.length === 1) {
       if (Array.isArray(current)) {
         current.forEach(item => {
           if (item && Object.prototype.hasOwnProperty.call(item, keys[0])) {
             delete item[keys[0]];
+            count++;
           }
         });
       } else {
-        delete current[keys[0]];
+        if (Object.prototype.hasOwnProperty.call(current, keys[0])) {
+          delete current[keys[0]];
+          count++;
+        }
       }
-      return;
+      return count;
     }
     
     const key = keys[0];
     const rest = keys.slice(1);
     if (Array.isArray(current)) {
-      current.forEach(item => removeKey(item, keys));
-    } else if (Object.prototype.hasOwnProperty.call(current, key)) {
-      removeKey(current[key], rest);
+      current.forEach(item => {
+          count += removeKey(item, keys);
+      });
+    } else if (current && Object.prototype.hasOwnProperty.call(current, key)) {
+      count += removeKey(current[key], rest);
     }
+    return count;
   }
   
   // Helper to get a value at a nested key using dot notation
@@ -93,26 +104,32 @@ function removeNestedKey(obj, keyPath) {
   }
   
   // New helper to remove objects in arrays based on a condition.
+  // Modified: update removeObjectsAtPath to return count of removals
   function removeObjectsAtPath(root, condition) {
     const parts = condition.path.split('.');
     const prop = parts.pop();
+    let count = 0;
     const containers = getObjectsAtPath(root, parts);
     containers.forEach(container => {
       if (Array.isArray(container)) {
         for (let i = 0; i < container.length; i++) {
           if (container[i] && container[i][prop] === condition.value) {
             container.splice(i, 1);
+            count++;
             i--; // adjust index after removal
           }
         }
       }
     });
+    return count;
   }
   
   // New helper to remove objects from arrays if a given property is an empty array.
+  // Modified: update removeEmptyArraysAtPath to return count of removals
   function removeEmptyArraysAtPath(root, condition) {
     const parts = condition.path.split('.');
     const prop = parts.pop();
+    let count = 0;
     const containers = getObjectsAtPath(root, parts);
     containers.forEach(container => {
       if (Array.isArray(container)) {
@@ -120,36 +137,41 @@ function removeNestedKey(obj, keyPath) {
           const item = container[i];
           if (item && Array.isArray(item[prop]) && item[prop].length === 0) {
             container.splice(i, 1);
+            count++;
             i--; // adjust index after removal
           }
         }
       }
     });
+    return count;
   }
   
-// New function for handling remove step
+// Modified: update handleRemove to count and log changes
 function handleRemove(data, step) {
+  let count = 0;
   if (Array.isArray(step.target)) {
     step.target.forEach(targ => {
-      logger.info("Removing key:", targ);
-      removeNestedKey(data, targ);
+      logger.step("Removing key:", targ);
+      count += removeNestedKey(data, targ);
     });
   } else if (step.equals !== undefined) {
     logger.info("Removing objects where", step.target, "equals", step.equals);
-    removeObjectsAtPath(data, { path: step.target, value: step.equals });
+    count += removeObjectsAtPath(data, { path: step.target, value: step.equals });
   } else {
     logger.info("Removing key:", step.target);
-    removeNestedKey(data, step.target);
+    count += removeNestedKey(data, step.target);
   }
+  logger.count(`Step 'remove' made`, count );
 }
 
-// Updated function for handling create step
+// Modified: update handleCreate to count and log changes
 function handleCreate(data, step) {
-  logger.info("Creating key:", step.target);
+  logger.step("Creating key:", step.target);
   const newKeysFull = step.target.split('.');
   const containerPath = newKeysFull.slice(0, -1);
   const newProp = newKeysFull[newKeysFull.length - 1];
   const flatTargets = getFlatTargets(data, containerPath);
+  let count = 0;
   
   if (step.hasOwnProperty('source')) {
     logger.info("Using source field for value:", step.source);
@@ -158,6 +180,7 @@ function handleCreate(data, step) {
         ? getNestedValue(obj, step.source)
         : step.source;
       obj[newProp] = val;
+      count++;
     });
   } else if (step.hasOwnProperty('value')) {
     logger.info("Using constant value for key:", step.value);
@@ -167,41 +190,48 @@ function handleCreate(data, step) {
         constant = JSON.parse(JSON.stringify(constant)); // deep clone
       }
       obj[newProp] = constant;
+      count++;
     });
   } else {
     logger.warn("Warning: create action for", step.target, "has neither source nor value");
   }
+  logger.count(`Step 'create' made`, count);
 }
 
-// New function for handling removeEmpty step
+// Modified: update handleRemoveEmpty to log change count
 function handleRemoveEmpty(data, step) {
-  logger.info("Removing elements if", step.target, "is an empty array");
-  removeEmptyArraysAtPath(data, { path: step.target });
+  logger.step("Removing elements if", step.target, "is an empty array");
+  const count = removeEmptyArraysAtPath(data, { path: step.target });
+  logger.count(`Step 'removeEmpty' made`, count);
 }
 
-// New function for handling rename step
+// Modified: update handleRename to count and log changes
 function handleRename(data, step) {
-  logger.info("Renaming key:", step.target, "to:", step.newName);
+  logger.step("Renaming key:", step.target, "to:", step.newName);
   const targetFull = step.target.split('.');
   const containerPath = targetFull.slice(0, -1);
   const oldKey = targetFull[targetFull.length - 1];
   const newKey = step.newName;
   const flatTargets = getFlatTargets(data, containerPath);
+  let count = 0;
   flatTargets.forEach(obj => {
     if (obj.hasOwnProperty(oldKey)) {
       obj[newKey] = obj[oldKey];
       delete obj[oldKey];
+      count++;
     }
   });
+  logger.count(`Step 'rename' made`, count);
 }
 
-// New function for handling update step
+// Modified: update handleUpdate to count and log changes
 function handleUpdate(data, step) {
-  logger.info("Updating key:", step.target);
+  logger.step("Updating key:", step.target);
   const targetFull = step.target.split('.');
   const containerPath = targetFull.slice(0, -1);
   const keyToUpdate = targetFull[targetFull.length - 1];
   const flatTargets = getFlatTargets(data, containerPath);
+  let count = 0;
   
   if (step.hasOwnProperty('exp')) {
     logger.info("Using expression for update:", step.exp);
@@ -213,6 +243,7 @@ function handleUpdate(data, step) {
       } else {
         flatTargets.forEach(obj => {
           obj[keyToUpdate] = expFunc(obj, obj[keyToUpdate]);
+          count++;
         });
       }
     } catch (e) {
@@ -226,6 +257,7 @@ function handleUpdate(data, step) {
           ? getNestedValue(obj, step.source)
           : step.source;
         obj[keyToUpdate] = val;
+        count++;
       }
     });
   } else if (step.hasOwnProperty('value')) {
@@ -233,11 +265,13 @@ function handleUpdate(data, step) {
     flatTargets.forEach(obj => {
       if (obj.hasOwnProperty(keyToUpdate)) {
         obj[keyToUpdate] = step.value;
+        count++;
       }
     });
   } else {
     logger.warn("Warning: update action for", step.target, "has neither source, value, nor expression");
   }
+  logger.count(`Step 'update' made `, count);
 }
 
 // Updated function to apply a processing step using dedicated action functions
